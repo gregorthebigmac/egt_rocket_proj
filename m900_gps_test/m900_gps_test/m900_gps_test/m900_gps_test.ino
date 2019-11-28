@@ -28,9 +28,7 @@ void setup() {
 	delay(10);
 	digitalWrite(RFM95_RST, HIGH);
 	delay(10);
-	//Serial.begin(115200);
 	Serial1.begin(9600);
-	//while (!Serial);
 	while (!Serial1);
 	while (!rf95.init()) {
 		while (1);
@@ -48,7 +46,6 @@ void loop() {
 	bool new_data = false;
 	unsigned long gps_chars;
 	unsigned short sentences, failed;
-
 	// for one second we parse GPS data and report some key values
 	for (unsigned long start = millis(); millis() - start < 1000;) {
 		while (Serial1.available()) {
@@ -57,7 +54,6 @@ void loop() {
 				new_data = true;
 		}
 	}
-	//Serial.println("");
 	if (new_data) {
 		int sat, prec, year;
 		byte month, day, hour, minute, second, hundredths;
@@ -73,55 +69,46 @@ void loop() {
 		itoa(sat, chsat + 5, 15);
 		prec = gps.hdop() == TinyGPS::GPS_INVALID_HDOP ? 0 : gps.hdop();
 		itoa(prec, chprec + 6, 14);
-		//Serial.println("Received GPS Data: Printing...");
 		gps.stats(&gps_chars, &sentences, &failed);
-		//Serial.print("LAT: ");
-		//Serial.println(flat == TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flat, 7);
-		//Serial.print("LON: ");
-		//Serial.println(flon == TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flon, 7);
-		//Serial.print("ALT: ");
-		//Serial.println(falt);
-		//Serial.print("SAT: ");
-		//Serial.println(sat);
-		//Serial.print("PREC: ");
-		//Serial.println(prec);
 		delay(10);
-
+		// sending latitude to receiver
 		char c_lat[16];
 		f_to_char(flat, "LAT: ", c_lat);
 		rf95.send((uint8_t *)c_lat, 17);
 		delay(10);
-
+		// sending longitude to receiver
 		char c_lon[16];
 		f_to_char(flon, "LON: ", c_lon);
 		rf95.send((uint8_t *)c_lon, 17);
 		delay(10);
-
+		// sending altitude to receiver
 		char c_alt[10];
 		f_to_char(falt, "ALT: ", c_alt);
 		rf95.send((uint8_t *)c_alt, 11);
 		delay(10);
-
+		// sending number of satellites locked to receiver
 		char c_sat[7];
 		sat_and_prec(sat, "SAT: ", c_sat);
 		rf95.send((uint8_t *)c_sat, 8);
 		delay(10);
-
+		// sending precision calculation to receiver
 		char c_prec[10];
 		sat_and_prec(prec, "PREC: ", c_prec);
 		rf95.send((uint8_t *)c_prec, 11);
 		delay(10);
 		rf95.waitPacketSent();
 	}
-	//else Serial.println("Did not receive a valid GPS Sentence.");
 }
 
+// convert float to char array via string
 void f_to_char(float f_input, char c_input[], char output[]) {
 	String s_final = String(c_input);
+	// we don't need more than 2 decimal places for altitude precision.
 	if (c_input[0] == 'A') {
 		String temp = String(f_input, 2);
 		s_final.concat(temp);
 	}
+	// we DO need the full 6 digit precision for LAT/LON
 	else {
 		String temp = String(f_input, 7);
 		s_final.concat(temp);
@@ -130,6 +117,7 @@ void f_to_char(float f_input, char c_input[], char output[]) {
 	s_final.toCharArray(output, final_length);
 }
 
+// convert integers to character array via string
 void sat_and_prec(int i_input, char c_input[], char output[]) {
 	String s_final = String(c_input);
 	String temp = String(i_input);
