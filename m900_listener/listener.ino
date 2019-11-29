@@ -43,11 +43,7 @@ RH_RF95 rf95(RFM95_CS, RFM95_INT);
 void setup() {
 	pinMode(RFM95_RST, OUTPUT);
 	digitalWrite(RFM95_RST, HIGH);
-
 	delay(100);
-
-	Serial.println("LoRa32u4 TX Test!");
-
 	// manual reset
 	digitalWrite(RFM95_RST, LOW);
 	delay(10);
@@ -78,14 +74,14 @@ void setup() {
 void loop() {
 	uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
 	uint8_t len = sizeof(buf);
-	Serial.println("Waiting for reply...");
 	if (rf95.waitAvailableTimeout(1000)) {
 		if (rf95.recv(buf, &len)) {
-			Serial.print("Got reply: ");
+			//Serial.print("Got reply: ");
 			Serial.println((char*)buf);
-			Serial.print("RSSI: ");
-			Serial.println(rf95.lastRssi(), DEC);
+			//Serial.print("RSSI: ");
+			//Serial.println(rf95.lastRssi(), DEC);
 		}
-		else Serial.println("Receive failed");
+		else Serial.println("Invalid message received from transmitter!");
 	}
+	else Serial.println("--------------------");
 }
